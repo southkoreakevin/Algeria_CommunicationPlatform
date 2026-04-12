@@ -1,24 +1,18 @@
 package com.example.demo.service;
 
-import com.example.demo.domain.User;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.web.dto.UserJoinRequest;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.example.demo.web.dto.UserLoginRequest;
+import com.example.demo.web.dto.UserResponse;
 
-@Service
-@RequiredArgsConstructor
-public class UserService {
+public interface UserService {
 
-    private final UserRepository userRepository;
+    void join(UserJoinRequest request);
 
-    public void join(UserJoinRequest request){
-        if(userRepository.existByEmail(request.email())){
-            throw new IllegalStateException("이미 존제하는 이메일 입니다.");
-        }
+    boolean login(UserLoginRequest reqeust);
 
-        User user = new User(request.email(), request.password());
-        userRepository.save(user);
-    }
+    boolean checkDuplicateEmail(String email);
+
+    UserResponse getMyInfo(String email);
+
 }
