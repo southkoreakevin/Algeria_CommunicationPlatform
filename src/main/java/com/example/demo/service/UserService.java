@@ -1,6 +1,6 @@
 package com.example.demo.service;
 
-import com.example.demo.repository.UserRepository;
+import com.example.demo.web.dto.LoginResponse;
 import com.example.demo.web.dto.UserJoinRequest;
 import com.example.demo.web.dto.UserLoginRequest;
 import com.example.demo.web.dto.UserResponse;
@@ -9,7 +9,7 @@ public interface UserService {
 
     void join(UserJoinRequest request);
 
-    boolean login(UserLoginRequest reqeust);
+    LoginResponse login(UserLoginRequest request);
 
     boolean checkDuplicateEmail(String email);
 

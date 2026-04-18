@@ -2,8 +2,11 @@ package com.example.demo.web;
 
 import com.example.demo.repository.memory.ItemSearchDto;
 import com.example.demo.service.UserService;
+import com.example.demo.web.dto.LoginResponse;
 import com.example.demo.web.dto.UserJoinRequest;
+import com.example.demo.web.dto.UserLoginRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +28,11 @@ public class UserController {
     @PostMapping("/idCheck")
     public boolean idCheck(@RequestBody ItemSearchDto dto){
         return userService.checkDuplicateEmail(dto.getEmail());
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@RequestBody UserLoginRequest request) {
+        return ResponseEntity.ok(userService.login(request));
     }
 
 }
