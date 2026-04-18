@@ -1,7 +1,7 @@
 package com.example.demo.web;
 
 import com.example.demo.repository.memory.ItemSearchDto;
-import com.example.demo.service.UserService1;
+import com.example.demo.service.UserService;
 import com.example.demo.web.dto.UserJoinRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,18 +14,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api")
 public class UserController {
 
-    private final UserService1 userService1;
+    private final UserService userService;
 
     @PostMapping("/join")
     public String join(@RequestBody UserJoinRequest request) {
-
-        return "Sing Up success";
+        userService.join(request);
+        return "Sign Up success";
     }
 
     @PostMapping("/idCheck")
     public boolean idCheck(@RequestBody ItemSearchDto dto){
-        String email = dto.getEmail();
-
+        return userService.checkDuplicateEmail(dto.getEmail());
     }
 
 }

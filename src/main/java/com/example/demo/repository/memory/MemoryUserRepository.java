@@ -29,6 +29,11 @@ public class MemoryUserRepository implements UserRepository {
         return Optional.ofNullable(store.get(id));
     }
 
+    @Override
+    public Optional<User> findByEmail(String email) {
+        return store.values().stream().filter(user -> user.getEmail().equals(email)).findFirst();
+    }
+
     public void clearStore(){
         store.clear();
     }
