@@ -43,9 +43,14 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody UserLoginRequest request) {
         log.info("[LOGIN] 로그인 요청 - email: {}", request.getEmail());
-        ResponseEntity<LoginResponse> response = ResponseEntity.ok(userService.login(request));
-        log.info("[LOGIN] 로그인 성공 - email: {}", request.getEmail());
-        return response;
+        try {
+            LoginResponse response = userService.login(request);
+            log.info("[LOGIN] 로그인 성공 - email: {}", request.getEmail());
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            log.warn("[LOGIN] 로그인 실패 - {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
     }
 
 }
