@@ -6,6 +6,8 @@ import com.example.demo.web.dto.ChatRoomResponse;
 import com.example.demo.web.dto.CreateChatRoomRequest;
 import com.example.demo.web.dto.CreateGroupChatRoomRequest;
 import com.example.demo.web.dto.MessageResponse;
+import com.example.demo.web.dto.ReadReceiptEvent;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,7 @@ import java.util.List;
 public class ChatRestController {
 
     private final ChatService chatService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @PostMapping("/rooms")
     public ResponseEntity<ChatRoomResponse> createRoom(@RequestBody CreateChatRoomRequest request,
@@ -52,6 +55,17 @@ public class ChatRestController {
         String email = (String) request.getAttribute("email");
         log.info("[CHAT] 채팅방 나가기 요청 - roomId: {}, email: {}", roomId, email);
         chatService.leaveRoom(roomId, email);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/rooms/{roomId}/read")
+    public ResponseEntity<Void> markAsRead(@PathVariable Long roomId, HttpServletRequest request) {
+        String email = (String) request.getAttribute("email");
+        Long lastReadMessageId = chatService.markAsRead(roomId, email);
+        if (lastReadMessageId != null) {
+            messagingTemplate.convertAndSend("/topic/chat/" + roomId + "/read",
+                    new ReadReceiptEvent(email, lastReadMessageId));
+        }
         return ResponseEntity.noContent().build();
     }
 

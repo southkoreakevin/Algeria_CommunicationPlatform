@@ -8,4 +8,6 @@ import java.util.List;
 public interface MessageRepository {
     void save(Message message);
     List<Message> findByChatRoomId(Long chatRoomId, Pageable pageable);
+    long countByChatRoomIdAndIdGreaterThan(Long chatRoomId, Long lastReadMessageId);
+    long countByChatRoomId(Long chatRoomId);
 }

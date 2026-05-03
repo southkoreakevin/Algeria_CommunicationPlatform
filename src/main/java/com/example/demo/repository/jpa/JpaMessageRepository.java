@@ -23,4 +23,14 @@ public class JpaMessageRepository implements MessageRepository {
     public List<Message> findByChatRoomId(Long chatRoomId, Pageable pageable) {
         return springDataMessageRepository.findByChatRoomIdOrderBySentAtDesc(chatRoomId, pageable);
     }
+
+    @Override
+    public long countByChatRoomIdAndIdGreaterThan(Long chatRoomId, Long lastReadMessageId) {
+        return springDataMessageRepository.countByChatRoomIdAndIdGreaterThan(chatRoomId, lastReadMessageId);
+    }
+
+    @Override
+    public long countByChatRoomId(Long chatRoomId) {
+        return springDataMessageRepository.countByChatRoomId(chatRoomId);
+    }
 }

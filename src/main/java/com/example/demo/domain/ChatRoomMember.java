@@ -23,8 +23,17 @@ public class ChatRoomMember {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(name = "last_read_message_id")
+    private Long lastReadMessageId;
+
     public ChatRoomMember(ChatRoom chatRoom, User user) {
         this.chatRoom = chatRoom;
         this.user = user;
+    }
+
+    public void markAsRead(Long messageId) {
+        if (this.lastReadMessageId == null || messageId > this.lastReadMessageId) {
+            this.lastReadMessageId = messageId;
+        }
     }
 }

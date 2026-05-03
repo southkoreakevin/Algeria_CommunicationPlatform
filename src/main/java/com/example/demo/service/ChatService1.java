@@ -33,13 +33,13 @@ public class ChatService1 implements ChatService {
         User target = getUser(targetEmail);
 
         return chatRoomMemberRepository.findDirectRoomBetween(requester, target)
-                .map(existingRoom -> toChatRoomResponse(existingRoom))
+                .map(existingRoom -> toChatRoomResponse(existingRoom, requester))
                 .orElseGet(() -> {
                     ChatRoom room = chatRoomRepository.save(new ChatRoom(ChatRoomType.DIRECT));
                     chatRoomMemberRepository.save(new ChatRoomMember(room, requester));
                     chatRoomMemberRepository.save(new ChatRoomMember(room, target));
                     log.info("[CHAT] 채팅방 생성 - roomId: {}, {} <-> {}", room.getId(), requesterEmail, targetEmail);
-                    return toChatRoomResponse(room);
+                    return toChatRoomResponse(room, requester);
                 });
     }
 
@@ -64,7 +64,7 @@ public class ChatService1 implements ChatService {
         }
 
         log.info("[CHAT] 그룹 채팅방 생성 - roomId: {}, name: {}, creator: {}", room.getId(), name, creatorEmail);
-        return toChatRoomResponse(room);
+        return toChatRoomResponse(room, creator);
     }
 
     @Override
@@ -87,7 +87,7 @@ public class ChatService1 implements ChatService {
 
         chatRoomMemberRepository.save(new ChatRoomMember(room, target));
         log.info("[CHAT] 그룹 멤버 추가 - roomId: {}, target: {}", roomId, targetEmail);
-        return toChatRoomResponse(room);
+        return toChatRoomResponse(room, requester);
     }
 
     @Override
@@ -105,11 +105,30 @@ public class ChatService1 implements ChatService {
     }
 
     @Override
+    @Transactional
+    public Long markAsRead(Long roomId, String email) {
+        User user = getUser(email);
+        ChatRoom room = getRoom(roomId);
+
+        ChatRoomMember member = chatRoomMemberRepository.findByChatRoomAndUser(room, user)
+                .orElseThrow(() -> new IllegalArgumentException("채팅방에 접근 권한이 없습니다."));
+
+        // 방의 마지막 메시지 ID 조회 (메시지가 없으면 null 유지)
+        List<Message> latest = messageRepository.findByChatRoomId(roomId, PageRequest.of(0, 1));
+        if (!latest.isEmpty()) {
+            member.markAsRead(latest.get(0).getId());
+        }
+
+        log.info("[CHAT] 읽음 처리 - roomId: {}, email: {}, lastReadMessageId: {}", roomId, email, member.getLastReadMessageId());
+        return member.getLastReadMessageId();
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<ChatRoomResponse> getChatRooms(String email) {
         User user = getUser(email);
         return chatRoomMemberRepository.findByUser(user).stream()
-                .map(member -> toChatRoomResponse(member.getChatRoom()))
+                .map(member -> toChatRoomResponse(member.getChatRoom(), user))
                 .toList();
     }
 
@@ -140,15 +159,30 @@ public class ChatService1 implements ChatService {
 
         Message message = new Message(room, sender, content);
         messageRepository.save(message);
+
+        // 발신자는 자신이 보낸 메시지를 자동으로 읽음 처리
+        chatRoomMemberRepository.findByChatRoomAndUser(room, sender)
+                .ifPresent(m -> m.markAsRead(message.getId()));
+
         log.info("[CHAT] 메시지 저장 - roomId: {}, sender: {}", roomId, senderEmail);
         return new MessageResponse(message.getId(), senderEmail, content, message.getSentAt().toString());
     }
 
-    private ChatRoomResponse toChatRoomResponse(ChatRoom room) {
-        List<String> memberEmails = chatRoomMemberRepository.findByChatRoom(room).stream()
+    private ChatRoomResponse toChatRoomResponse(ChatRoom room, User requestUser) {
+        List<ChatRoomMember> members = chatRoomMemberRepository.findByChatRoom(room);
+        List<String> memberEmails = members.stream()
                 .map(m -> m.getUser().getEmail())
                 .toList();
-        return new ChatRoomResponse(room.getId(), room.getType(), room.getName(), memberEmails);
+
+        long unreadCount = members.stream()
+                .filter(m -> m.getUser().equals(requestUser))
+                .findFirst()
+                .map(m -> m.getLastReadMessageId() == null
+                        ? messageRepository.countByChatRoomId(room.getId())
+                        : messageRepository.countByChatRoomIdAndIdGreaterThan(room.getId(), m.getLastReadMessageId()))
+                .orElse(0L);
+
+        return new ChatRoomResponse(room.getId(), room.getType(), room.getName(), memberEmails, unreadCount);
     }
 
     private User getUser(String email) {

@@ -46,4 +46,9 @@ public class JpaChatRoomMemberRepository implements ChatRoomMemberRepository {
     public void deleteByChatRoomAndUser(ChatRoom chatRoom, User user) {
         springDataChatRoomMemberRepository.deleteByChatRoomAndUser(chatRoom, user);
     }
+
+    @Override
+    public java.util.Optional<ChatRoomMember> findByChatRoomAndUser(ChatRoom chatRoom, User user) {
+        return springDataChatRoomMemberRepository.findByChatRoomAndUser(chatRoom, user);
+    }
 }

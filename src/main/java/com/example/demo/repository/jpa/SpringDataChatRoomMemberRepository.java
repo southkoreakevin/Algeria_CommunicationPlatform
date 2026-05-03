@@ -16,6 +16,7 @@ public interface SpringDataChatRoomMemberRepository extends JpaRepository<ChatRo
     List<ChatRoomMember> findByChatRoom(ChatRoom chatRoom);
     boolean existsByChatRoomAndUser(ChatRoom chatRoom, User user);
     void deleteByChatRoomAndUser(ChatRoom chatRoom, User user);
+    java.util.Optional<ChatRoomMember> findByChatRoomAndUser(ChatRoom chatRoom, User user);
 
     @Query("SELECT m.chatRoom FROM ChatRoomMember m " +
            "WHERE m.chatRoom.type = :type " +

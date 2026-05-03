@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface SpringDataMessageRepository extends JpaRepository<Message, Long> {
     List<Message> findByChatRoomIdOrderBySentAtDesc(Long chatRoomId, Pageable pageable);
+    long countByChatRoomIdAndIdGreaterThan(Long chatRoomId, Long lastReadMessageId);
+    long countByChatRoomId(Long chatRoomId);
 }
