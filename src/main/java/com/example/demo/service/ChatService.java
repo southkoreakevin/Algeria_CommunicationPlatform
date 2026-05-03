@@ -7,6 +7,9 @@ import java.util.List;
 
 public interface ChatService {
     ChatRoomResponse createDirectRoom(String requesterEmail, String targetEmail);
+    ChatRoomResponse createGroupRoom(String creatorEmail, String name, List<String> memberEmails);
+    ChatRoomResponse addMember(Long roomId, String requesterEmail, String targetEmail);
+    void leaveRoom(Long roomId, String email);
     List<ChatRoomResponse> getChatRooms(String email);
     List<MessageResponse> getMessages(Long roomId, String email, int page);
     MessageResponse saveMessage(Long roomId, String senderEmail, String content);

@@ -1,8 +1,10 @@
 package com.example.demo.web;
 
 import com.example.demo.service.ChatService;
+import com.example.demo.web.dto.AddMemberRequest;
 import com.example.demo.web.dto.ChatRoomResponse;
 import com.example.demo.web.dto.CreateChatRoomRequest;
+import com.example.demo.web.dto.CreateGroupChatRoomRequest;
 import com.example.demo.web.dto.MessageResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +26,33 @@ public class ChatRestController {
     public ResponseEntity<ChatRoomResponse> createRoom(@RequestBody CreateChatRoomRequest request,
                                                        HttpServletRequest httpRequest) {
         String email = (String) httpRequest.getAttribute("email");
-        log.info("[CHAT] 채팅방 생성 요청 - requester: {}, target: {}", email, request.targetEmail());
+        log.info("[CHAT] 1:1 채팅방 생성 요청 - requester: {}, target: {}", email, request.targetEmail());
         return ResponseEntity.ok(chatService.createDirectRoom(email, request.targetEmail()));
+    }
+
+    @PostMapping("/rooms/group")
+    public ResponseEntity<ChatRoomResponse> createGroupRoom(@RequestBody CreateGroupChatRoomRequest request,
+                                                            HttpServletRequest httpRequest) {
+        String email = (String) httpRequest.getAttribute("email");
+        log.info("[CHAT] 그룹 채팅방 생성 요청 - creator: {}, name: {}", email, request.name());
+        return ResponseEntity.ok(chatService.createGroupRoom(email, request.name(), request.memberEmails()));
+    }
+
+    @PostMapping("/rooms/{roomId}/members")
+    public ResponseEntity<ChatRoomResponse> addMember(@PathVariable Long roomId,
+                                                      @RequestBody AddMemberRequest request,
+                                                      HttpServletRequest httpRequest) {
+        String email = (String) httpRequest.getAttribute("email");
+        log.info("[CHAT] 그룹 멤버 추가 요청 - roomId: {}, requester: {}, target: {}", roomId, email, request.targetEmail());
+        return ResponseEntity.ok(chatService.addMember(roomId, email, request.targetEmail()));
+    }
+
+    @DeleteMapping("/rooms/{roomId}/members/me")
+    public ResponseEntity<Void> leaveRoom(@PathVariable Long roomId, HttpServletRequest request) {
+        String email = (String) request.getAttribute("email");
+        log.info("[CHAT] 채팅방 나가기 요청 - roomId: {}, email: {}", roomId, email);
+        chatService.leaveRoom(roomId, email);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/rooms")

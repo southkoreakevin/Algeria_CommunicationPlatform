@@ -20,11 +20,20 @@ public class ChatRoom {
     @Column(nullable = false)
     private ChatRoomType type;
 
+    @Column
+    private String name;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
     public ChatRoom(ChatRoomType type) {
         this.type = type;
+        this.createdAt = LocalDateTime.now();
+    }
+
+    public ChatRoom(ChatRoomType type, String name) {
+        this.type = type;
+        this.name = name;
         this.createdAt = LocalDateTime.now();
     }
 }

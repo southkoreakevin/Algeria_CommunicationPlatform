@@ -13,4 +13,5 @@ public interface ChatRoomMemberRepository {
     List<ChatRoomMember> findByChatRoom(ChatRoom chatRoom);
     Optional<ChatRoom> findDirectRoomBetween(User user1, User user2);
     boolean existsByChatRoomAndUser(ChatRoom chatRoom, User user);
+    void deleteByChatRoomAndUser(ChatRoom chatRoom, User user);
 }

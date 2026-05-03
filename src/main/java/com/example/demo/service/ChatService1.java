@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -40,6 +41,67 @@ public class ChatService1 implements ChatService {
                     log.info("[CHAT] 채팅방 생성 - roomId: {}, {} <-> {}", room.getId(), requesterEmail, targetEmail);
                     return toChatRoomResponse(room);
                 });
+    }
+
+    @Override
+    @Transactional
+    public ChatRoomResponse createGroupRoom(String creatorEmail, String name, List<String> memberEmails) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("그룹 채팅방 이름을 입력해주세요.");
+        }
+        User creator = getUser(creatorEmail);
+        ChatRoom room = chatRoomRepository.save(new ChatRoom(ChatRoomType.GROUP, name));
+        chatRoomMemberRepository.save(new ChatRoomMember(room, creator));
+
+        if (memberEmails != null) {
+            memberEmails.stream()
+                    .filter(email -> !Objects.equals(email, creatorEmail))
+                    .distinct()
+                    .forEach(email -> {
+                        User member = getUser(email);
+                        chatRoomMemberRepository.save(new ChatRoomMember(room, member));
+                    });
+        }
+
+        log.info("[CHAT] 그룹 채팅방 생성 - roomId: {}, name: {}, creator: {}", room.getId(), name, creatorEmail);
+        return toChatRoomResponse(room);
+    }
+
+    @Override
+    @Transactional
+    public ChatRoomResponse addMember(Long roomId, String requesterEmail, String targetEmail) {
+        User requester = getUser(requesterEmail);
+        ChatRoom room = getRoom(roomId);
+
+        if (room.getType() != ChatRoomType.GROUP) {
+            throw new IllegalArgumentException("그룹 채팅방에만 멤버를 추가할 수 있습니다.");
+        }
+        if (!chatRoomMemberRepository.existsByChatRoomAndUser(room, requester)) {
+            throw new IllegalArgumentException("채팅방에 접근 권한이 없습니다.");
+        }
+
+        User target = getUser(targetEmail);
+        if (chatRoomMemberRepository.existsByChatRoomAndUser(room, target)) {
+            throw new IllegalArgumentException("이미 채팅방에 참여 중인 유저입니다.");
+        }
+
+        chatRoomMemberRepository.save(new ChatRoomMember(room, target));
+        log.info("[CHAT] 그룹 멤버 추가 - roomId: {}, target: {}", roomId, targetEmail);
+        return toChatRoomResponse(room);
+    }
+
+    @Override
+    @Transactional
+    public void leaveRoom(Long roomId, String email) {
+        User user = getUser(email);
+        ChatRoom room = getRoom(roomId);
+
+        if (!chatRoomMemberRepository.existsByChatRoomAndUser(room, user)) {
+            throw new IllegalArgumentException("채팅방에 참여하지 않은 유저입니다.");
+        }
+
+        chatRoomMemberRepository.deleteByChatRoomAndUser(room, user);
+        log.info("[CHAT] 채팅방 나가기 - roomId: {}, email: {}", roomId, email);
     }
 
     @Override
@@ -86,7 +148,7 @@ public class ChatService1 implements ChatService {
         List<String> memberEmails = chatRoomMemberRepository.findByChatRoom(room).stream()
                 .map(m -> m.getUser().getEmail())
                 .toList();
-        return new ChatRoomResponse(room.getId(), room.getType(), memberEmails);
+        return new ChatRoomResponse(room.getId(), room.getType(), room.getName(), memberEmails);
     }
 
     private User getUser(String email) {

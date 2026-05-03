@@ -41,4 +41,9 @@ public class JpaChatRoomMemberRepository implements ChatRoomMemberRepository {
     public boolean existsByChatRoomAndUser(ChatRoom chatRoom, User user) {
         return springDataChatRoomMemberRepository.existsByChatRoomAndUser(chatRoom, user);
     }
+
+    @Override
+    public void deleteByChatRoomAndUser(ChatRoom chatRoom, User user) {
+        springDataChatRoomMemberRepository.deleteByChatRoomAndUser(chatRoom, user);
+    }
 }
