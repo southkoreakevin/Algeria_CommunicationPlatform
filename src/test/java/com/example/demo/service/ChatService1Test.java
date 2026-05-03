@@ -351,6 +351,78 @@ class ChatService1Test {
     }
 
     // =========================================================================
+    // getMessages (페이징 정렬)
+    // =========================================================================
+
+    @Nested
+    @DisplayName("getMessages - 페이징 및 정렬")
+    class GetMessages {
+
+        @Test
+        @DisplayName("응답은 오래된→최신 순(ASC) 정렬")
+        void 응답_ASC정렬() {
+            given(userRepository.findByEmail("a@test.com")).willReturn(Optional.of(userA));
+            given(chatRoomRepository.findById(10L)).willReturn(Optional.of(directRoom));
+            given(chatRoomMemberRepository.existsByChatRoomAndUser(directRoom, userA)).willReturn(true);
+
+            // DB는 DESC(최신→오래된)로 반환
+            Message msg3 = message(30L, directRoom, userB, "세 번째");
+            Message msg2 = message(20L, directRoom, userB, "두 번째");
+            Message msg1 = message(10L, directRoom, userB, "첫 번째");
+            given(messageRepository.findByChatRoomId(10L, PageRequest.of(0, 30)))
+                    .willReturn(List.of(msg3, msg2, msg1)); // DESC
+
+            List<MessageResponse> result = chatService.getMessages(10L, "a@test.com", 0);
+
+            // 응답은 ASC: id 10 → 20 → 30
+            assertThat(result).extracting(MessageResponse::id)
+                    .containsExactly(10L, 20L, 30L);
+        }
+
+        @Test
+        @DisplayName("메시지가 1개여도 정상 반환")
+        void 메시지_1개() {
+            given(userRepository.findByEmail("a@test.com")).willReturn(Optional.of(userA));
+            given(chatRoomRepository.findById(10L)).willReturn(Optional.of(directRoom));
+            given(chatRoomMemberRepository.existsByChatRoomAndUser(directRoom, userA)).willReturn(true);
+
+            Message msg = message(1L, directRoom, userB, "hello");
+            given(messageRepository.findByChatRoomId(10L, PageRequest.of(0, 30)))
+                    .willReturn(List.of(msg));
+
+            List<MessageResponse> result = chatService.getMessages(10L, "a@test.com", 0);
+
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).content()).isEqualTo("hello");
+        }
+
+        @Test
+        @DisplayName("메시지가 없으면 빈 리스트 반환")
+        void 메시지_없으면_빈리스트() {
+            given(userRepository.findByEmail("a@test.com")).willReturn(Optional.of(userA));
+            given(chatRoomRepository.findById(10L)).willReturn(Optional.of(directRoom));
+            given(chatRoomMemberRepository.existsByChatRoomAndUser(directRoom, userA)).willReturn(true);
+            given(messageRepository.findByChatRoomId(10L, PageRequest.of(0, 30))).willReturn(List.of());
+
+            List<MessageResponse> result = chatService.getMessages(10L, "a@test.com", 0);
+
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("채팅방 멤버가 아니면 메시지 조회 불가")
+        void 권한없으면_예외() {
+            given(userRepository.findByEmail("a@test.com")).willReturn(Optional.of(userA));
+            given(chatRoomRepository.findById(10L)).willReturn(Optional.of(directRoom));
+            given(chatRoomMemberRepository.existsByChatRoomAndUser(directRoom, userA)).willReturn(false);
+
+            assertThatThrownBy(() -> chatService.getMessages(10L, "a@test.com", 0))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("접근 권한");
+        }
+    }
+
+    // =========================================================================
     // addMember
     // =========================================================================
 

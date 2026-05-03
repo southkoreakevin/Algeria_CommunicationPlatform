@@ -142,7 +142,9 @@ public class ChatService1 implements ChatService {
             throw new IllegalArgumentException("채팅방에 접근 권한이 없습니다.");
         }
 
-        return messageRepository.findByChatRoomId(roomId, PageRequest.of(page, 30)).stream()
+        List<Message> messages = messageRepository.findByChatRoomId(roomId, PageRequest.of(page, 30));
+        // DB는 DESC(최신순)로 페이징, 응답은 채팅 UI에 맞게 ASC(오래된→최신)로 반환
+        return messages.reversed().stream()
                 .map(m -> new MessageResponse(m.getId(), m.getSender().getEmail(), m.getContent(), m.getSentAt().toString()))
                 .toList();
     }
