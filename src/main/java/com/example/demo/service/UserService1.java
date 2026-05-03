@@ -58,7 +58,12 @@ public class UserService1 implements UserService{
     }
 
     @Override
-    public UserResponse getMyInfo(String userId) {
-        return null;
+    public UserResponse getMyInfo(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
+        return UserResponse.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .build();
     }
 }

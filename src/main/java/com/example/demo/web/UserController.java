@@ -5,9 +5,12 @@ import com.example.demo.service.UserService;
 import com.example.demo.web.dto.LoginResponse;
 import com.example.demo.web.dto.UserJoinRequest;
 import com.example.demo.web.dto.UserLoginRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.example.demo.web.dto.UserResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,6 +35,12 @@ public class UserController {
             log.warn("[JOIN] 회원가입 실패 - {}", e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @GetMapping("/users/me")
+    public ResponseEntity<UserResponse> getMyInfo(HttpServletRequest request) {
+        String email = (String) request.getAttribute("email");
+        return ResponseEntity.ok(userService.getMyInfo(email));
     }
 
     @PostMapping("/idCheck")
