@@ -351,6 +351,55 @@ class ChatService1Test {
     }
 
     // =========================================================================
+    // getRoomMemberEmailsExcept (알람용 멤버 조회)
+    // =========================================================================
+
+    @Nested
+    @DisplayName("getRoomMemberEmailsExcept")
+    class GetRoomMemberEmailsExcept {
+
+        @Test
+        @DisplayName("발신자를 제외한 멤버 이메일 목록 반환")
+        void 발신자_제외() {
+            given(chatRoomRepository.findById(10L)).willReturn(Optional.of(directRoom));
+            given(chatRoomMemberRepository.findByChatRoom(directRoom))
+                    .willReturn(List.of(new ChatRoomMember(directRoom, userA),
+                                        new ChatRoomMember(directRoom, userB)));
+
+            List<String> result = chatService.getRoomMemberEmailsExcept(10L, "a@test.com");
+
+            assertThat(result).containsExactly("b@test.com");
+            assertThat(result).doesNotContain("a@test.com");
+        }
+
+        @Test
+        @DisplayName("그룹 방에서 발신자 제외 나머지 전원 반환")
+        void 그룹방_발신자_제외() {
+            given(chatRoomRepository.findById(20L)).willReturn(Optional.of(groupRoom));
+            given(chatRoomMemberRepository.findByChatRoom(groupRoom))
+                    .willReturn(List.of(new ChatRoomMember(groupRoom, userA),
+                                        new ChatRoomMember(groupRoom, userB),
+                                        new ChatRoomMember(groupRoom, userC)));
+
+            List<String> result = chatService.getRoomMemberEmailsExcept(20L, "a@test.com");
+
+            assertThat(result).containsExactlyInAnyOrder("b@test.com", "c@test.com");
+        }
+
+        @Test
+        @DisplayName("1:1 방에서 자신만 있으면 빈 리스트")
+        void 멤버_없으면_빈리스트() {
+            given(chatRoomRepository.findById(10L)).willReturn(Optional.of(directRoom));
+            given(chatRoomMemberRepository.findByChatRoom(directRoom))
+                    .willReturn(List.of(new ChatRoomMember(directRoom, userA)));
+
+            List<String> result = chatService.getRoomMemberEmailsExcept(10L, "a@test.com");
+
+            assertThat(result).isEmpty();
+        }
+    }
+
+    // =========================================================================
     // getMessages (페이징 정렬)
     // =========================================================================
 

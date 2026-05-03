@@ -125,6 +125,16 @@ public class ChatService1 implements ChatService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<String> getRoomMemberEmailsExcept(Long roomId, String excludeEmail) {
+        ChatRoom room = getRoom(roomId);
+        return chatRoomMemberRepository.findByChatRoom(room).stream()
+                .map(m -> m.getUser().getEmail())
+                .filter(email -> !email.equals(excludeEmail))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<ChatRoomResponse> getChatRooms(String email) {
         User user = getUser(email);
         return chatRoomMemberRepository.findByUser(user).stream()
